@@ -1,0 +1,16 @@
+name: 'heymax_loyalty'
+version: '1.0.0'
+config-version: 2
+
+profile: 'heymax_loyalty'
+
+model-paths: ["models"]
+test-paths: ["tests"]
+
+models:
+  heymax_loyalty:
+    +materialized: table # All models will be materialized as tables by default
+
+tests:
+  +store_failures: true
+  +severity: error

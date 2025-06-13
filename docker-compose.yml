@@ -103,7 +103,7 @@ services:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       TZ: UTC
-    command: ["tail", "-f", "/dev/null"]
+    command: ["tail", "-f", "/dev/null"] # keeps dbt running
     restart: "no" # dbt should only run when triggered by Airflow
 
   visualization:

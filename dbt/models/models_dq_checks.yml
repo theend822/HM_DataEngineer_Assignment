@@ -1,0 +1,74 @@
+version: 2
+
+models:
+  - name: dim_users
+    description: "User dimension table with high-level user metrics"
+    columns:
+      - name: granularity_check_ds_user_id
+        description: "Table granularity is defined by user_id and ds"
+        tests:
+          - dbt_utils.unique_combination_of_columns:
+              combination_of_columns:
+                - user_id
+                - ds
+
+      - name: user_id
+        description: "Unique user identifier"
+        tests:
+          - not_null
+          
+      - name: acq_source
+        description: "User acquisition source"
+        tests:
+          - not_null
+          
+      - name: user_country
+        description: "User country"
+        tests:
+          - not_null
+          
+      - name: miles_balance
+        description: "Net miles balance"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "miles_balance = (total_miles_earned - total_miles_redeemed)"
+          - dbt_utils.expression_is_true:
+              expression: "miles_balance >= 0"
+              
+      - name: ds
+        description: "Partition key"
+        tests:
+          - not_null
+          
+  - name: fct_events
+    description: "Fact table containing all events"
+    columns:
+      - name: event_id
+        description: "Unique event identifier (created based on event_time, user_id, and event_type)"
+        tests:
+          - unique
+          - not_null
+          
+      - name: user_id
+        description: "User identifier"
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_users')
+              field: user_id
+              
+      - name: event_time
+        description: "Event timestamp"
+        tests:
+          - not_null
+          
+      - name: miles_amount
+        description: "Miles amount (should be positive when not null)"
+        tests:
+          - dbt_utils.expression_is_true:
+              expression: "miles_amount IS NULL OR miles_amount > 0"
+          
+      - name: ds
+        description: "Partition key"
+        tests:
+          - not_null
