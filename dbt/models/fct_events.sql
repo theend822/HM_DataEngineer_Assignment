@@ -7,6 +7,31 @@
     }
 ) }}
 
+/*
+================================================================================
+FACT TABLE: FCT_EVENTS
+================================================================================
+
+This fact table stores all user events with enhanced attributes for 
+analytics and metrics calculation.
+
+GRANULARITY: event_id (made of 'event_time', 'user_id', 'event_type')
+
+EVENT TYPES:
+• miles_earned: User earned miles from transactions
+• miles_redeemed: User spent miles on rewards  
+• share: User shared content (social engagement)
+• like: User liked content (social engagement)
+• reward_search: User searched for rewards
+
+KEY FEATURES:
+• JSON storage: Flexible event_json field for additional attributes
+
+DATA SOURCES:
+• fct_event_stream
+
+================================================================================
+*/
 
 SELECT
     -- Create surrogate key for events

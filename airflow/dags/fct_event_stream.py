@@ -1,6 +1,5 @@
 from airflow import DAG
 from airflow.operators.python import PythonOperator
-from airflow.operators.bash import BashOperator
 from datetime import datetime, timezone
 from dag_utils.ingest_data import ingest_data
 from dag_utils.execute_sql import execute_sql
@@ -90,19 +89,4 @@ with DAG (
         },
     )
 
-    dbt_deps = BashOperator(
-        task_id="dbt_deps",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt deps",
-    )
-
-    dbt_run_models = BashOperator(
-        task_id="dbt_run_models", 
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt run",
-    )
-
-    dbt_test = BashOperator(
-        task_id="dbt_test",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt test",
-    )
-
-    create_stg_table >> load_stg >> dq_tasks >> create_fct_table >> load_fct >> dbt_deps >> dbt_run_models >> dbt_test
+    create_stg_table >> load_stg >> dq_tasks >> create_fct_table >> load_fct

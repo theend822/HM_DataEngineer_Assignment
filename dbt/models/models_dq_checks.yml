@@ -72,3 +72,97 @@ models:
         description: "Partition key"
         tests:
           - not_null
+
+  - name: agg_active_users
+    description: "Active user counts by day, week, and month, segmented by acquisition source and country"
+    
+    columns:
+      - name: period_start_date
+        description: "Start date of the period (actual date for daily, Monday for weekly, 1st of month for monthly)"
+        tests:
+          - not_null
+
+      - name: period_type
+        description: "Type of time period"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['daily', 'weekly', 'monthly']
+
+      - name: acq_source
+        description: "User acquisition source"
+        tests:
+          - not_null
+
+      - name: country
+        description: "User country code"
+        tests:
+          - not_null
+
+      - name: active_user_count
+        description: "Number of distinct active users in the period"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: ds
+        description: "Partition key"
+        tests:
+          - not_null
+
+    tests:
+      # No duplicate combinations
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - period_start_date
+            - period_type
+            - acq_source  
+            - country
+
+  - name: agg_user_lifecycle_weekly
+    description: "Weekly user status tracking (new, retained, resurrected, dormant, churned) by acquisition source and country"
+    
+    columns:
+      - name: week_start_date
+        description: "Start date of the week (Sunday)"
+        tests:
+          - not_null
+
+      - name: acq_source
+        description: "User acquisition source"
+        tests:
+          - not_null
+
+      - name: country
+        description: "User country"
+        tests:
+          - not_null
+
+      - name: user_status
+        description: "User lifecycle status for the week"
+        tests:
+          - not_null
+          - accepted_values:
+              values: ['new', 'retained', 'resurrected', 'dormant', 'churned']
+
+      - name: user_count
+        description: "Number of users in this status"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+
+      - name: ds
+        description: "Partition key"
+        tests:
+          - not_null
+
+    tests:
+      # No duplicate combinations
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - week_start_date
+            - acq_source  
+            - country
+            - user_status

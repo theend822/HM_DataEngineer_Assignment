@@ -7,6 +7,28 @@
     pre_hook="{{ ref('dbt/tests/dim_users_no_multi_attr') }}" -- if dq check of upstream fails, pipeline won't run
 ) }}
 
+/*
+================================================================================
+DIMENSION TABLE: DIM_USERS
+================================================================================
+
+This dimension table provides a comprehensive view of user attributes and 
+their aggregated activity metrics as of the snapshot date.
+
+GRANULARITY: user_id + ds (partition key)
+
+KEY METRICS:
+• total_miles_earned: Lifetime miles earned from transactions
+• total_miles_redeemed: Lifetime miles spent on rewards
+• miles_balance: Net miles available (earned - redeemed)
+• active_in_Xdays: Recency flags for 7/30/90 day periods
+
+DATA SOURCES:
+• fct_event_stream
+
+================================================================================
+*/
+
 WITH user_aggregates AS (
     SELECT
         user_id,
