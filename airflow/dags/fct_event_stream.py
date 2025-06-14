@@ -8,14 +8,50 @@ from dag_utils.create_table import create_table
 from dq_check.stg_event_stream import DQ_CHECKS
 
 """
-This pipeline is responsible for ingesting raw data from a CSV file into a stage table in Postgres, after peforming necessary transformations and data quality checks, publishing the fct table. Data modeling will be carried out using dbt in later stage. 
+================================================================================
+RAW DATA PIPELINE: FCT_EVENT_STREAM
+================================================================================
 
-The pipeline consists of the following steps:
-1. Create a staging table `stg_event_stream` in Postgres. (create_stg_table)
-2. Ingest data from a CSV file into the staging table. (load_stg)
-3. Perform data quality checks on the staging table. (dq_tasks: list of dq_check tasks)
-4. Create a fact table `fct_event_stream` in Postgres. (create_fct_table)
-5. Load the fact table with data from the staging table. create_stg_table
+This pipeline processes raw loyalty program event data from CSV files into 
+a structured PostgreSQL fact table, with comprehensive data quality validation.
+
+PURPOSE:
+• Ingest raw event data from CSV files into staging area
+• Perform data quality checks on business-critical fields
+• Transform and load clean data into fact table for downstream analytics
+
+DATA FLOW:
+Raw CSV → stg_event_stream → DQ Checks → fct_event_stream
+
+PIPELINE STEPS:
+1. CREATE STAGING TABLE: Creates stg_event_stream with VARCHAR columns for flexible ingestion
+2. LOAD STAGING DATA: Ingests raw CSV data into staging table
+3. DATA QUALITY CHECKS: Validates business rules across 3 categories:
+   • NULL_CHECK: Ensures required fields are populated
+   • ACCEPT_VALUE_CHECK: Validates enum values (event_type, platform, country, etc.)
+   • FORMAT_CHECK: Validates data formats (timestamps, user_id patterns)
+4. CREATE FACT TABLE: Creates fct_event_stream with proper data types
+5. LOAD FACT TABLE: Transforms and loads validated data with type casting
+
+DATA QUALITY CATEGORIES:
+• NULL_CHECK: Validates required fields are not null
+• ACCEPT_VALUE_CHECK: Ensures values match business enums
+• FORMAT_CHECK: Validates regex patterns for timestamps and IDs
+
+EVENT TYPES INCLUDED:
+• miles_earned: User earned miles from transactions
+• miles_redeemed: User spent miles on rewards  
+• share: User shared content
+• like: User liked content
+• reward_search: User searched for rewards
+
+BUSINESS RULES ENFORCED:
+• transaction_category required only for transactional events (miles_earned, miles_redeemed, reward_search)
+• miles_amount required only for monetary events (miles_earned, miles_redeemed)
+• user_id must follow pattern: u_XXXX (4 digits)
+• timestamp must be in format: YYYY-MM-DD HH:MM:SS.SSSSSS
+
+================================================================================
 """
 
 with DAG (
