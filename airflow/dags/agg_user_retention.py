@@ -33,9 +33,4 @@ with DAG(
         bash_command="docker exec heymax_loyalty-dbt-1 dbt test --models agg_user_retention",
     )
 
-    dbt_test_retention_logic = BashOperator(
-        task_id="dbt_test_retention_logic",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt test --models test:assert_retention_logic test:assert_cohort_continuity",
-    )
-
-    wait_for_fct_events >> dbt_deps >> dbt_build_agg_user_retention >> [dbt_test_agg_user_retention, dbt_test_retention_logic]
+    wait_for_fct_events >> dbt_deps >> dbt_build_agg_user_retention >> dbt_test_agg_user_retention

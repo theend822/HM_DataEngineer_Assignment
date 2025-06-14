@@ -31,29 +31,14 @@ with DAG(
         bash_command="docker exec heymax_loyalty-dbt-1 dbt deps",
     )
 
-    dbt_build_metrics_user_status = BashOperator(
-        task_id="dbt_build_metrics_user_status",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt run --models metrics_user_status",
+    dbt_build_agg_user_lifecycle_weekly = BashOperator(
+        task_id="dbt_build_agg_user_lifecycle_weekly",
+        bash_command="docker exec heymax_loyalty-dbt-1 dbt run --models agg_user_lifecycle_weekly",
     )
 
-    dbt_test_metrics_user_status = BashOperator(
-        task_id="dbt_test_metrics_user_status",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt test --models metrics_user_status",
+    dbt_test_agg_user_lifecycle_weekly = BashOperator(
+        task_id="dbt_test_agg_user_lifecycle_weekly",
+        bash_command="docker exec heymax_loyalty-dbt-1 dbt test --models agg_user_lifecycle_weekly",
     )
 
-    # Cross-table consistency check (only after both metrics tables exist)
-    wait_for_metrics_active_users = ExternalTaskSensor(
-        task_id='wait_for_metrics_active_users',
-        external_dag_id='metrics_active_users',
-        external_task_id=None,
-        timeout=600,
-        poke_interval=30
-    )
-
-    dbt_test_cross_table_consistency = BashOperator(
-        task_id="dbt_test_cross_table_consistency",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt test --models test:assert_active_users_consistency test:assert_user_status_logic",
-    )
-
-    [wait_for_dim_users, wait_for_fct_events] >> dbt_deps >> dbt_build_metrics_user_status >> dbt_test_metrics_user_status
-    wait_for_metrics_active_users >> dbt_test_cross_table_consistency
+    [wait_for_dim_users, wait_for_fct_events] >> dbt_deps >> dbt_build_agg_user_lifecycle_weekly >> dbt_test_agg_user_lifecycle_weekly

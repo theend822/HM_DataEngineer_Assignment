@@ -73,7 +73,7 @@ models:
         tests:
           - not_null
 
-  - name: agg_active_users
+  - name: agg_active_user
     description: "Active user counts by day, week, and month, segmented by acquisition source and country"
     
     columns:

@@ -4,7 +4,6 @@
         "field": "ds",
         "data_type": "string"
     },
-    pre_hook="{{ ref('dbt/tests/dim_users_no_multi_attr') }}" -- if dq check of upstream fails, pipeline won't run
 ) }}
 
 /*

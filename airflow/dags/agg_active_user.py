@@ -31,14 +31,14 @@ with DAG(
         bash_command="docker exec heymax_loyalty-dbt-1 dbt deps",
     )
 
-    dbt_build_metrics_active_users = BashOperator(
-        task_id="dbt_build_metrics_active_users",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt run --models metrics_active_users",
+    dbt_build_agg_active_user = BashOperator(
+        task_id="dbt_build_agg_active_user",
+        bash_command="docker exec heymax_loyalty-dbt-1 dbt run --models agg_active_user",
     )
 
-    dbt_test_metrics_active_users = BashOperator(
-        task_id="dbt_test_metrics_active_users",
-        bash_command="docker exec heymax_loyalty-dbt-1 dbt test --models metrics_active_users",
+    dbt_test_agg_active_user = BashOperator(
+        task_id="dbt_test_agg_active_user",
+        bash_command="docker exec heymax_loyalty-dbt-1 dbt test --models agg_active_user",
     )
 
-    [wait_for_dim_users, wait_for_fct_events] >> dbt_deps >> dbt_build_metrics_active_users >> dbt_test_metrics_active_users
+    [wait_for_dim_users, wait_for_fct_events] >> dbt_deps >> dbt_build_agg_active_user >> dbt_test_agg_active_user
