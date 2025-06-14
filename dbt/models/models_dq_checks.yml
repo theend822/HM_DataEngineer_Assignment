@@ -166,3 +166,45 @@ models:
             - acq_source  
             - country
             - user_status
+    
+  - name: agg_user_retention
+    description: "User retention triangle analysis by cohort week and week offset"
+    columns:
+      - name: cohort_week
+        description: "Week when cohort first became active"
+        tests:
+          - not_null
+      - name: week_offset
+        description: "Number of weeks since cohort week (0-12)"
+        tests:
+          - not_null
+          - accepted_values:
+              values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+      - name: retained_users
+        description: "Number of users from cohort active in this week"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0"
+      - name: cohort_size
+        description: "Total size of the cohort (week 0 users)"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 1"
+      - name: retention_rate
+        description: "Percentage of cohort retained (0-100)"
+        tests:
+          - not_null
+          - dbt_utils.expression_is_true:
+              expression: ">= 0 AND <= 100"
+      - name: ds
+        description: "Partition key"
+        tests:
+          - not_null
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - cohort_week
+            - week_offset
+            - ds
