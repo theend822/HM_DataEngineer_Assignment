@@ -50,18 +50,18 @@ daily_active AS (
     country,
     COUNT(DISTINCT user_id) as active_user_count
   FROM base_events
-  GROUP BY DATE(event_time), acq_source, country
+  GROUP BY 1, 2, 3, 4
 ),
 
 weekly_active AS (
   SELECT 
-    DATE_TRUNC('week', event_time + INTERVAL '1 day')::DATE - 1 as period_start_date, -- start on Sunday
+    {{ date_trunc_sunday_of_the_week('event_time') }} as period_start_date, -- start on Sunday
     'weekly' as period_type,
     acq_source,
     country,
     COUNT(DISTINCT user_id) as active_user_count
   FROM base_events
-  GROUP BY DATE_TRUNC('week', event_time), acq_source, country
+  GROUP BY 1, 2, 3, 4
 ),
 
 monthly_active AS (
@@ -72,7 +72,7 @@ monthly_active AS (
     country,
     COUNT(DISTINCT user_id) as active_user_count
   FROM base_events
-  GROUP BY DATE_TRUNC('month', event_time), acq_source, country
+  GROUP BY 1, 2, 3, 4
 )
 
 SELECT 

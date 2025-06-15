@@ -78,7 +78,7 @@ models:
     
     columns:
       - name: period_start_date
-        description: "Start date of the period (actual date for daily, Monday for weekly, 1st of month for monthly)"
+        description: "Start date of the period (actual date for daily, Sunday for weekly, 1st of month for monthly)"
         tests:
           - not_null
 
@@ -175,7 +175,7 @@ models:
         tests:
           - not_null
       - name: week_offset
-        description: "Number of weeks since cohort week (0-12)"
+        description: "Number of weeks since cohort week"
         tests:
           - not_null
           - accepted_values:

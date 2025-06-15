@@ -8,12 +8,15 @@
 
 /*
 ================================================================================
-METRICS TABLE: USER RETENTION
+METRICS TABLE: AGG_USER_RETENTION
 ================================================================================
 
-This model calculates user retention rates across cohorts using your original
-triangle retention logic. Each row represents cohort performance at different
+This model calculates user retention rates across cohorts. 
+Each row represents cohort performance at different
 week offsets from their first activity week.
+
+For better visualization, this model only calculates retention up
+to 12 weeks after the cohort's first activity week.
 
 GRANULARITY: cohort_week + week_offset + ds (partition key)
 
@@ -31,19 +34,19 @@ DATA SOURCES:
 WITH user_cohorts AS (
   SELECT 
     user_id, 
-    DATE_TRUNC('week', MIN(event_time))::DATE AS cohort_week
+    MIN({{ date_trunc_sunday_of_the_week('event_time') }}) AS cohort_week
   FROM {{ ref('fct_events') }}
   WHERE ds >= '2025-01-01'
-  GROUP BY user_id
+  GROUP BY 1
 ),
 
 user_weekly_activity AS (
   SELECT 
     user_id, 
-    DATE_TRUNC('week', event_time)::DATE AS activity_week
+    {{ date_trunc_sunday_of_the_week('event_time') }} AS activity_week
   FROM {{ ref('fct_events') }}
   WHERE ds >= '2025-01-01'
-  GROUP BY user_id, DATE_TRUNC('week', event_time)
+  GROUP BY 1, 2
 ),
 
 cohort_activity AS (
@@ -63,30 +66,26 @@ retention_base AS (
     COUNT(DISTINCT user_id) AS retained_users
   FROM cohort_activity
   WHERE week_offset >= 0 AND week_offset <= 12
-  GROUP BY cohort_week, week_offset
+  GROUP BY 1, 2
 ),
 
-retention_with_metrics AS (
-  SELECT
+cohort_sizes AS (
+  SELECT 
     cohort_week,
-    week_offset,
-    retained_users,
-    -- Calculate cohort size (week 0 retained users)
-    FIRST_VALUE(retained_users) OVER (
-      PARTITION BY cohort_week 
-      ORDER BY week_offset
-    ) AS cohort_size
-  FROM retention_base
+    retained_users AS cohort_size
+  FROM retention_base 
+  WHERE week_offset = 0
 )
 
 SELECT
-  cohort_week,
-  week_offset,
-  retained_users,
-  cohort_size,
+  r.cohort_week,
+  r.week_offset,
+  r.retained_users,
+  c.cohort_size,
   ROUND(
-    retained_users * 100.0 / NULLIF(cohort_size, 0), 2
+  r.retained_users * 100.0 / NULLIF(c.cohort_size, 0), 2
   ) AS retention_rate,
   CURRENT_DATE::VARCHAR AS ds
-FROM retention_with_metrics
-ORDER BY cohort_week, week_offset
+FROM retention_base r
+JOIN cohort_sizes c ON r.cohort_week = c.cohort_week
+

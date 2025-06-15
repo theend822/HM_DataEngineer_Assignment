@@ -97,11 +97,11 @@ user_weekly_activity AS (
     e.user_id,
     u.acq_source,
     u.country,
-    DATE_TRUNC('week', event_time + INTERVAL '1 day')::DATE - 1 AS week_start -- start on Sunday
+    {{ date_trunc_sunday_of_the_week('event_time') }} AS week_start -- start on Sunday
   FROM {{ ref('fct_events') }} e
   JOIN latest_users u ON e.user_id = u.user_id
   WHERE e.ds >= '2025-01-01'
-  GROUP BY e.user_id, u.acq_source, u.country, DATE_TRUNC('week', e.event_time)
+  GROUP BY 1, 2, 3, 4
 ),
 
 -- STEP 2: Get all weeks and all users
@@ -202,5 +202,5 @@ SELECT
   CURRENT_DATE::VARCHAR AS ds
 FROM user_status_calculated
 WHERE user_status IS NOT NULL
-GROUP BY week_start, acq_source, country, user_status
-ORDER BY week_start, acq_source, country, user_status
+GROUP BY 1, 2, 3, 4
+ORDER BY 1, 2, 3, 4
