@@ -31,6 +31,7 @@ DATA SOURCES:
 ================================================================================
 */
 
+-- STEP 1: Assigns each user to their cohort based on their first-ever activity week (Sunday-starting)
 WITH user_cohorts AS (
   SELECT 
     user_id, 
@@ -40,6 +41,7 @@ WITH user_cohorts AS (
   GROUP BY 1
 ),
 
+-- STEP 2: Creates a deduplicated list of all weeks where each user was active.
 user_weekly_activity AS (
   SELECT 
     user_id, 
@@ -49,6 +51,7 @@ user_weekly_activity AS (
   GROUP BY 1, 2
 ),
 
+-- STEP 3: Joins cohorts with activity to calculate week_offset (how many weeks after cohort week each user was active).
 cohort_activity AS (
   SELECT
     a.user_id,
@@ -59,6 +62,7 @@ cohort_activity AS (
   JOIN user_weekly_activity a ON c.user_id = a.user_id
 ),
 
+-- STEP 4: Aggregates to count how many users from each cohort were active at each week offset (0-12 weeks).
 retention_base AS (
   SELECT
     cohort_week,
@@ -69,6 +73,7 @@ retention_base AS (
   GROUP BY 1, 2
 ),
 
+-- STEP 5: Extracts the cohort size (retained_users where week_offset = 0) for each cohort.
 cohort_sizes AS (
   SELECT 
     cohort_week,
@@ -77,6 +82,7 @@ cohort_sizes AS (
   WHERE week_offset = 0
 )
 
+-- STEP 6: Joins retention counts with cohort sizes to calculate retention percentages.
 SELECT
   r.cohort_week,
   r.week_offset,
