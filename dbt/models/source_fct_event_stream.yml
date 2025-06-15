@@ -1,0 +1,26 @@
+version: 2
+
+sources:
+  - name: hm_datamart
+    description: "Raw data tables created by Airflow"
+    schema: public
+    tables:
+      - name: fct_event_stream
+        description: "Raw event stream data processed by Airflow"
+        columns:
+          - name: event_time
+            description: "Event timestamp"
+          - name: user_id
+            description: "User identifier"
+          - name: event_type
+            description: "Type of event"
+          - name: transaction_category
+            description: "Transaction category"
+          - name: miles_amount
+            description: "Miles amount"
+          - name: platform
+            description: "Platform used"
+          - name: utm_source
+            description: "UTM source"
+          - name: country
+            description: "Country code"

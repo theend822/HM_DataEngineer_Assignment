@@ -2,13 +2,15 @@
 -- Fails if: Any user appears with different utm_source or country values
 
 SELECT 
-    * 
+    aaa.user_id,
+    aaa.acq_source_count,
+    aaa.country_count 
 FROM (
     SELECT 
     user_id,
     COUNT(DISTINCT utm_source) as acq_source_count,
     COUNT(DISTINCT country) as country_count
-    FROM {{ ref('fct_event_stream') }}
+    FROM {{ source('hm_datamart', 'fct_event_stream') }}
     GROUP BY 1
-)
-WHERE acq_source_count > 1 OR country_count > 1
+) aaa
+WHERE aaa.acq_source_count > 1 OR aaa.country_count > 1

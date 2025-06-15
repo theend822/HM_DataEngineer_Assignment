@@ -35,7 +35,7 @@ DATA SOURCES:
 
 SELECT
     -- Create surrogate key for events
-    {{ dbt_utils.surrogate_key(['event_time', 'user_id', 'event_type']) }} AS event_id,
+    {{ dbt_utils.generate_surrogate_key(['event_time', 'user_id', 'event_type']) }} AS event_id,
     
     -- Core event attributes
     event_time,
@@ -59,4 +59,4 @@ SELECT
     platform,
     DATE(event_time)::VARCHAR AS ds  -- YYYY-MM-DD string format
     
-FROM {{ ref('fct_event_stream') }}
+FROM {{ source('hm_datamart', 'fct_event_stream') }}

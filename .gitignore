@@ -12,3 +12,10 @@ __pycache__/
 # Logs
 *.log
 logs/
+
+# dbt
+dbt/dbt_packages/
+dbt/target/
+dbt/logs/
+dbt/dbt_project.yml.jinja
+*.log

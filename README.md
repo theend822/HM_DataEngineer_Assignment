@@ -19,6 +19,10 @@ This platform powers three core business intelligence areas:
 - Multi-granularity tracking: Daily, Weekly, Monthly Active Users
 - Cross-dimensional analysis by acquisition channel and country
 
+## Key Findings & Insights
+- 24 users having negative miles balance (redeemed more miles than earned)
+
+
 ## Architecture & Data Flow
 
 
@@ -93,6 +97,7 @@ Save raw data in *airflow/raw_data* folder
 - Purpose: Multi-granularity active user counts
 - Dimensions: time period + acquisition source + country
 - Business Value: Measures platform engagement and geographic performance
+
 
 ## Data Quality & Testing Strategy
 ### Multi-Layer Validation

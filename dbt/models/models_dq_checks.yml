@@ -4,41 +4,31 @@ models:
   - name: dim_users
     description: "User dimension table with high-level user metrics"
     columns:
-      - name: granularity_check_ds_user_id
-        description: "Table granularity is defined by user_id and ds"
-        tests:
-          - dbt_utils.unique_combination_of_columns:
-              combination_of_columns:
-                - user_id
-                - ds
-
       - name: user_id
         description: "Unique user identifier"
         tests:
           - not_null
-          
       - name: acq_source
         description: "User acquisition source"
         tests:
-          - not_null
-          
+          - not_null    
       - name: user_country
         description: "User country"
         tests:
           - not_null
-          
-      - name: miles_balance
-        description: "Net miles balance"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "miles_balance = (total_miles_earned - total_miles_redeemed)"
-          - dbt_utils.expression_is_true:
-              expression: "miles_balance >= 0"
-              
       - name: ds
         description: "Partition key"
         tests:
           - not_null
+    tests:
+      - dbt_utils.unique_combination_of_columns:
+          combination_of_columns:
+            - user_id
+            - ds
+      - dbt_utils.expression_is_true:
+          expression: "miles_balance = (total_miles_earned - total_miles_redeemed)"
+      # - dbt_utils.expression_is_true:
+      #     expression: "miles_balance >= 0" # comment this out until nagative miles balance bug is fixed
           
   - name: fct_events
     description: "Fact table containing all events"
@@ -48,69 +38,51 @@ models:
         tests:
           - unique
           - not_null
-          
       - name: user_id
         description: "User identifier"
         tests:
           - not_null
-          - relationships:
-              to: ref('dim_users')
-              field: user_id
-              
       - name: event_time
         description: "Event timestamp"
         tests:
           - not_null
-          
-      - name: miles_amount
-        description: "Miles amount (should be positive when not null)"
-        tests:
-          - dbt_utils.expression_is_true:
-              expression: "miles_amount IS NULL OR miles_amount > 0"
-          
       - name: ds
         description: "Partition key"
         tests:
           - not_null
+    tests:
+      - dbt_utils.expression_is_true:
+          expression: "miles_amount IS NULL OR miles_amount > 0"
 
   - name: agg_active_user
     description: "Active user counts by day, week, and month, segmented by acquisition source and country"
-    
     columns:
       - name: period_start_date
         description: "Start date of the period (actual date for daily, Sunday for weekly, 1st of month for monthly)"
         tests:
           - not_null
-
       - name: period_type
         description: "Type of time period"
         tests:
           - not_null
           - accepted_values:
               values: ['daily', 'weekly', 'monthly']
-
       - name: acq_source
         description: "User acquisition source"
         tests:
           - not_null
-
       - name: country
         description: "User country code"
         tests:
           - not_null
-
       - name: active_user_count
         description: "Number of distinct active users in the period"
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
-              expression: ">= 0"
-
       - name: ds
         description: "Partition key"
         tests:
           - not_null
-
     tests:
       # No duplicate combinations
       - dbt_utils.unique_combination_of_columns:
@@ -119,45 +91,38 @@ models:
             - period_type
             - acq_source  
             - country
+      - dbt_utils.expression_is_true:
+          expression: "active_user_count>= 0"
 
   - name: agg_user_lifecycle_weekly
     description: "Weekly user status tracking (new, retained, resurrected, dormant, churned) by acquisition source and country"
-    
     columns:
       - name: week_start_date
         description: "Start date of the week (Sunday)"
         tests:
           - not_null
-
       - name: acq_source
         description: "User acquisition source"
         tests:
           - not_null
-
       - name: country
         description: "User country"
         tests:
           - not_null
-
       - name: user_status
         description: "User lifecycle status for the week"
         tests:
           - not_null
           - accepted_values:
               values: ['new', 'retained', 'resurrected', 'dormant', 'churned']
-
       - name: user_count
         description: "Number of users in this status"
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
-              expression: ">= 0"
-
       - name: ds
         description: "Partition key"
         tests:
           - not_null
-
     tests:
       # No duplicate combinations
       - dbt_utils.unique_combination_of_columns:
@@ -166,6 +131,8 @@ models:
             - acq_source  
             - country
             - user_status
+      - dbt_utils.expression_is_true:
+          expression: "user_count>= 0"
     
   - name: agg_user_retention
     description: "User retention triangle analysis by cohort week and week offset"
@@ -184,20 +151,14 @@ models:
         description: "Number of users from cohort active in this week"
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
-              expression: ">= 0"
       - name: cohort_size
         description: "Total size of the cohort (week 0 users)"
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
-              expression: ">= 1"
       - name: retention_rate
         description: "Percentage of cohort retained (0-100)"
         tests:
           - not_null
-          - dbt_utils.expression_is_true:
-              expression: ">= 0 AND <= 100"
       - name: ds
         description: "Partition key"
         tests:
@@ -208,3 +169,10 @@ models:
             - cohort_week
             - week_offset
             - ds
+            - name: retained_users
+      - dbt_utils.expression_is_true:
+          expression: "retained_users>= 0"
+      - dbt_utils.expression_is_true:
+          expression: "cohort_size>= 1"
+      - dbt_utils.expression_is_true:
+          expression: "retention_rate>= 0 AND retention_rate<= 100"

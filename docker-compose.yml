@@ -88,7 +88,8 @@ services:
     restart: always
 
   dbt:
-    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest@sha256:a705312b55af0ebdd149977914c28502a382d74dca8fe51fff368371a61cc8a7
+    image: ghcr.io/dbt-labs/dbt-postgres:1.9.latest
+    platform: linux/amd64 # Force x86_64 architecture for compatibility
     depends_on:
       postgres:
         condition: service_healthy
@@ -103,11 +104,13 @@ services:
       POSTGRES_HOST: ${POSTGRES_HOST}
       POSTGRES_PORT: ${POSTGRES_PORT}
       TZ: UTC
-    command: ["tail", "-f", "/dev/null"] # keeps dbt running
+    entrypoint: /bin/bash
+    command: -c "tail -f /dev/null" # keeps dbt running
     restart: "no" # dbt should only run when triggered by Airflow
 
   visualization:
     image: metabase/metabase:latest
+    platform: linux/amd64 # Force x86_64 architecture for compatibility
     depends_on:
       postgres:
         condition: service_healthy

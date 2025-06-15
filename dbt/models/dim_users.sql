@@ -34,7 +34,6 @@ WITH user_aggregates AS (
         -- User attributes
         utm_source AS acq_source,
         country AS user_country,
-        platform,
         
         -- Miles summary
         SUM(CASE WHEN event_type = 'miles_earned' THEN miles_amount ELSE 0 END) AS total_miles_earned,
@@ -46,8 +45,8 @@ WITH user_aggregates AS (
         MAX(CASE WHEN event_time >= CURRENT_DATE - INTERVAL '30 days' THEN 1 ELSE 0 END) AS active_in_30days,
         MAX(CASE WHEN event_time >= CURRENT_DATE - INTERVAL '90 days' THEN 1 ELSE 0 END) AS active_in_90days
         
-    FROM {{ ref('fct_event_stream') }}
-    GROUP BY 1,2,3,4
+    FROM {{ source('hm_datamart', 'fct_event_stream') }}
+    GROUP BY 1,2,3
 ),
 
 latest_events AS (
@@ -58,20 +57,19 @@ latest_events AS (
         transaction_category,
         miles_amount,
         ROW_NUMBER() OVER (PARTITION BY user_id ORDER BY event_time DESC) as rn
-    FROM {{ ref('fct_event_stream') }}
+    FROM {{ source('hm_datamart', 'fct_event_stream') }}
 )
 
 SELECT
-    user_id,
-    acq_source,
-    user_country,
-    platform,
-    total_miles_earned,
-    total_miles_redeemed,
-    (total_miles_earned - total_miles_redeemed) AS miles_balance,
-    CASE WHEN active_in_7days = 1 THEN TRUE ELSE FALSE END AS active_in_7days,
-    CASE WHEN active_in_30days = 1 THEN TRUE ELSE FALSE END AS active_in_30days,
-    CASE WHEN active_in_90days = 1 THEN TRUE ELSE FALSE END AS active_in_90days,
+    ua.user_id,
+    ua.acq_source,
+    ua.user_country,
+    ua.total_miles_earned,
+    ua.total_miles_redeemed,
+    (ua.total_miles_earned - ua.total_miles_redeemed) AS miles_balance,
+    CASE WHEN ua.active_in_7days = 1 THEN TRUE ELSE FALSE END AS active_in_7days,
+    CASE WHEN ua.active_in_30days = 1 THEN TRUE ELSE FALSE END AS active_in_30days,
+    CASE WHEN ua.active_in_90days = 1 THEN TRUE ELSE FALSE END AS active_in_90days,
     
     -- Latest event as a JSON map
     JSON_BUILD_OBJECT(
