@@ -1,37 +1,87 @@
 # HeyMax Loyalty Program Analytics Platform
 
-A comprehensive data engineering solution for loyalty program analytics, featuring end-to-end data pipeline orchestration, robust data quality checks, and actionable business metrics.
-
-## Business Metrics & Analytics
-
-This platform powers three core business intelligence areas:
-
-### **User Retention Analysis**
-- Cohort-based retention tracking up to 12 weeks
-- Week-over-week retention rates and retention triangle visualization
-
-### **User Lifecycle Management** 
-- Growth accounting with 4-week lookback window
-- User status: New, Retained, Resurrected, Dormant, Churned
-- Segmentation by acquisition source and geography
-
-### **Active User Metrics**
-- Multi-granularity tracking: Daily, Weekly, Monthly Active Users
-- Cross-dimensional analysis by acquisition channel and country
-
-## Key Findings & Insights
-- 24 users having negative miles balance (redeemed more miles than earned)
+End-to-end data engineering solution for HeyMax loyalty program analytics. Processes raw CSV event data through a multi-layered pipeline to generate three business analytical dashboards. 
 
 
-## Architecture & Data Flow
+## Technical Architecture
+![image](https://drive.google.com/uc?export=view&id=1SpB1suhX2RNIbtk8fzECRrXWOQafYgZJ)
 
 
-### Key Design Principles
+## Data Flow
+### Three Layer Data Pipeline
+![image](https://drive.google.com/uc?export=view&id=1ryoZuRRCOQf3Arp5BOPsCZxZVFcn4erG)
 
-**Modularity**: Each component (ingestion, transformation, metrics) is independently deployable and testable
-**Data Quality First**: Comprehensive validation at every stage - from raw ingestion to final metrics
-**Consistent Granularity**: All models use Sunday-starting weeks for consistent time-based analysis
-**Scalability**: Partitioned tables and efficient joins designed for growing data volumes
+
+## Key Design Principles
+
+### Data Modeling & Transformation Logic
+  - Modular Pipeline Architecture: Independent layers (raw ingestion → core tables → analytics aggregates) enable isolated testing and deployment
+  - Consistent Time Granularity: All models use Sunday-starting weeks for uniform time-based analysis across retention cohorts and lifecycle tracking
+  - JSON Flexibility: Event storage in JSON format accommodates schema evolution while maintaining structured analytics
+
+### Dashboard Design & Metric Clarity
+  - Business-Focused Metrics: Three dashboards directly address core business questions (retention rates, user lifecycle status, engagement trends)
+  - Multi-Dimensional Analysis: Consistent segmentation by acquisition source and geography across all metrics
+  - Actionable Insights: Retention triangle enables cohort comparison, lifecycle tracking identifies user segments for targeted campaigns
+
+### Code Readability, Structure & Documentation
+  - Comprehensive Data Quality: 15+ validation checks with clear business rule documentation and automatic failure handling
+  - Self-Documenting Models: Each dbt model includes detailed purpose, granularity, and business logic explanations in header comments
+  - Centralized Configuration: Environment-based database connections, reusable macros, and standardized testing patterns
+
+
+## Data Model Deep Dive
+
+### Raw Layer
+
+#### fct_event_stream - Clean & validated event data from CSV ingestion
+  - Granularity: One row per user event
+  - Quality Assurance: 15+ data quality validations (format, enums, required fields)
+
+### Core Data Layer
+
+#### fct_events - Structured event data with enhanced attributes and JSON flexibility
+  - Granularity: event_id (surrogate key from event_time + user_id + event_type)
+  - Key Features: Date partitioning, JSON formatted event data
+
+#### dim_users - Daily snapshot of user master data
+  - Granularity: user_id + ds (daily snapshot)
+  - Key Metrics: Miles balance, active flags (7/30/90 days)
+  - Key Features: Date partitioning, JSON formatted latest event
+
+### Analytics Layer - Growth Accounting
+
+#### agg_active_user - DAU / WAU / MAU
+  - Granularity: period_type(daily / weekly / monthly) + period_start_date + acq_source + country
+  - Dimensional Analysis: Segmented by acquisition channel and geographic market
+
+#### agg_user_lifecycle_weekly - Weekly user lifecycle status tracking (New, Retained, Resurrected, Dormant, Churned)
+  - Granularity: cutoff_week + acq_source + country + user_status
+  - Business value: Answering the critical question, "By week x, how many New/Retained/Resurrected/Dormant/Churned users do we have?"
+
+#### agg_user_retention - Cohort Analysis
+  - Granularity: cohort_week + week_offset (0-16 weeks)
+  - Business Value: Identifies which user acquisition cohorts demonstrate strongest long-term engagement
+
+
+## Business Intelligence Dashboards
+
+### Active User Metrics
+  - Powered by agg_active_user, monitoring platform engagement metrics: DAU & WAU, with capability of segmenting by acquisition source and user country.
+  - Provides operational visibility into user engagement and platform health.
+![image](https://drive.google.com/uc?export=view&id=10F6CnCbAB_t-BrObWYtReBT3tugXtJd-)
+![image](https://drive.google.com/uc?export=view&id=1CEXXAzo1X1pL4X_o2BpFVuNRc0xUZ6Nq)
+
+### User Lifecycle Management
+  - Powered by agg_user_lifecycle_weekly, tracking the lifecycle of users on weekly basis. 
+  - Enables identification of user segments for targeted retention campaigns.
+![image](https://drive.google.com/uc?export=view&id=1hWmnUPkYgKCvvnL8XEfkKHVg13sSBMbS)
+
+### Cohort Retention Analysis
+  - Powered by agg_user_retention, visualizing retention metrics up to 16 weeks. 
+  - Critical for understanding long-term user value and acquisition quality.
+![image](https://drive.google.com/uc?export=view&id=1Hb1XvycSQeoi_8WbuuxmMSQJhbMQAEJS)
+
 
 ## Quick Start
 
@@ -54,73 +104,14 @@ Save raw data in *airflow/raw_data* folder
 ### 4. Run Data Pipeline
 1. Navigate to Airflow UI
 2. Enable and trigger DAGs in order:
-
     fct_event_stream -> dim_users / fct_events -> agg_user_retention, agg_active_user, agg_user_lifecycle_weekly
 
 
-
-## Data Models Deep Dive
-### Fact Tables
-***fct_event_stream*** - Raw Events
-
-- Purpose: Staging layer for raw CSV ingestion
-- Validation: 15+ data quality checks on business rules
-
-***fct_events*** - Core Event Stream
-
-- Granularity: One row per user event
-- Key Features: JSON event storage, date partitioning, surrogate keys
-- Event Types: miles_earned, miles_redeemed, share, like, reward_search
-
-### Dimension Tables
-***dim_users*** - User Attributes
-
-- Granularity: One row per user per snapshot date
-- Key Metrics: Miles balance, recency flags, latest event JSON
-- SCD Type: Type 2 with daily snapshots
-
-### Aggregate Tables
-***agg_user_retention*** - Cohort Analysis
-
-- Purpose: Powers retention triangle analysis
-- Granularity: cohort_week + week_offset
-- Business Value: Identifies which user cohorts have strongest retention
-
-***agg_user_lifecycle_weekly*** - Growth Accounting
-
-- Purpose: Tracks user status changes over time
-- Methodology: 4-week lookback window for status classification
-- Business Value: Enables user lifecycle marketing campaigns
-
-***agg_active_user*** - Activity Metrics
-
-- Purpose: Multi-granularity active user counts
-- Dimensions: time period + acquisition source + country
-- Business Value: Measures platform engagement and geographic performance
-
-
-## Data Quality & Testing Strategy
-### Multi-Layer Validation
-- Stage 1: Raw Ingestion (Airflow)
-
-    Format validation (timestamp patterns, ID formats)
-    Business rule validation (required fields per event type)
-    Accepted value validation (enum constraints)
-
-- Stage 2: Transformation (dbt)
-
-    Schema tests (uniqueness, not-null, relationships)
-    Custom business logic tests (miles balance calculations)
-    Data freshness and volume anomaly detection
-
-- Stage 3: Analytics (dbt)
-
-    Metric consistency tests (retention rates 0-100%)
-    Cross-model validation (user counts match across tables)
-    Granularity tests (no duplicate primary keys)
-
-
 ## Future Improvements
+
+### Potential bug in miles tracking
+24 users are found with negative miles balance (redeemed more miles than actually earned). Needs to work with PROD team to triage the situation.
+![image](https://drive.google.com/uc?export=view&id=1xI_JhmfRLfbOsi192DMdcwRK9KyGOC9w)
 
 ### Production-Ready Event Storage
 Currently, fct_event_stream serves as a historical data dump without partitioning. In production environments, this table should implement proper partitioning strategy (daily/weekly) and incremental loading patterns to handle high-volume event streams efficiently.
