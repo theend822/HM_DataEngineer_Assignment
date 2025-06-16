@@ -52,7 +52,9 @@ models:
           - not_null
     tests:
       - dbt_utils.expression_is_true:
-          expression: "miles_amount IS NULL OR miles_amount > 0"
+          expression: "JSON_EXTRACT_PATH_TEXT(event_json,'miles_amount')::decimal IS NULL OR JSON_EXTRACT_PATH_TEXT(event_json,'miles_amount')::decimal > 0"
+      - dbt_utils.expression_is_true: 
+          expression: "event_json::jsonb ? 'event_type' AND event_json::jsonb ? 'transaction_category' AND event_json::jsonb ? 'miles_amount'" # check if all 3 required keys are present
 
   - name: agg_active_user
     description: "Active user counts by day, week, and month, segmented by acquisition source and country"
@@ -169,7 +171,6 @@ models:
             - cohort_week
             - week_offset
             - ds
-            - name: retained_users
       - dbt_utils.expression_is_true:
           expression: "retained_users>= 0"
       - dbt_utils.expression_is_true:

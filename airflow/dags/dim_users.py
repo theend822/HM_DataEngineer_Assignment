@@ -16,7 +16,7 @@ with DAG(
         task_id='wait_for_fct_event_stream',
         external_dag_id='fct_event_stream',
         external_task_id=None,
-        execution_date_fn=get_most_recent_dag_run,
+        execution_date_fn=get_most_recent_dag_run('fct_event_stream'),
         timeout=600,
     )
 

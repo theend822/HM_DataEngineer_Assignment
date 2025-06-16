@@ -57,7 +57,7 @@ cohort_activity AS (
     a.user_id,
     c.cohort_week,
     a.activity_week,
-    DATE_PART('week', a.activity_week - c.cohort_week) AS week_offset
+    (a.activity_week - c.cohort_week)/7 AS week_offset
   FROM user_cohorts c
   JOIN user_weekly_activity a ON c.user_id = a.user_id
 ),

@@ -15,7 +15,7 @@ with DAG(
         task_id='wait_for_fct_events',
         external_dag_id='fct_events',
         external_task_id=None,  # Wait for entire DAG
-        execution_date_fn=get_most_recent_dag_run,
+        execution_date_fn=get_most_recent_dag_run('fct_events'),
         timeout=600,
         poke_interval=30
     )

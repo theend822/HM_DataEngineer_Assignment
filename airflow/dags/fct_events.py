@@ -15,7 +15,7 @@ with DAG(
         task_id='wait_for_fct_event_stream',
         external_dag_id='fct_event_stream',
         external_task_id=None,
-        execution_date_fn=get_most_recent_dag_run,
+        execution_date_fn=get_most_recent_dag_run('fct_event_stream'),
         timeout=600,
         poke_interval=30
     )
@@ -35,9 +35,4 @@ with DAG(
         bash_command="docker exec heymax_assignment-dbt-1 dbt test --models fct_events",
     )
 
-    dbt_test_custom_dq_check= BashOperator(
-        task_id="dbt_test_custom_dq_check",
-        bash_command="docker exec heymax_assignment-dbt-1 dbt test --models fct_events_miles_check fct_events_trans_cat_check",
-    )
-
-    wait_for_fct_event_stream >> dbt_deps >> dbt_build_fct_events >> [dbt_test_fct_events, dbt_test_custom_dq_check]
+    wait_for_fct_event_stream >> dbt_deps >> dbt_build_fct_events >> dbt_test_fct_events
