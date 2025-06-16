@@ -69,7 +69,7 @@ retention_base AS (
     week_offset,
     COUNT(DISTINCT user_id) AS retained_users
   FROM cohort_activity
-  WHERE week_offset >= 0 AND week_offset <= 12
+  WHERE week_offset >= 0 AND week_offset <= 16
   GROUP BY 1, 2
 ),
 

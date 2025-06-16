@@ -28,24 +28,22 @@ DATA SOURCES:
 USER LIFECYCLE DEFINITIONS (4-week lookback window)
 ================================================================================
 
-• NEW: First time ever active in this week
-  - Example: User never seen before, active in Week 7
+(Assuming "Week 23 2025-06-02" is selected)
 
-• RETAINED: Active this week AND was active within the previous 4 weeks (Week 3-6)
-  - Example: User active in Week 7, also active in Week 5
-  - Example: User active in Week 7, also active in Week 3 and 6
+* NEW: First time ever active in Week 23
 
-• RESURRECTED: Active this week BUT last activity was more than 4 weeks ago (before Week 3)
-  - Example: User active in Week 7, last seen in Week 1 or 2
-  - Example: User active in Week 7, last seen 2 months ago
+* RETAINED: Active in Week 23 AND was active within the previous 4 weeks (Week 19-22)
+    - Example: User active in Week 23, also active in Week 20
+    - Example: User active in Week 23, also active in Week 19 and 21
 
-• DORMANT: NOT active this week but was active within previous 4 weeks (Week 3-6)
-  - Example: User not active in Week 7, but was active in Week 5
-  - Grace period before marking as churned
+* RESURRECTED: Active in Week 23 BUT last activity was more than 4 weeks ago (before Week 19)
+    - Example: User active in Week 23, last seen in Week 16
 
-• CHURNED: NOT active this week AND last activity was more than 4 weeks ago (before Week 3)
-  - Example: User not active in Week 7, last seen in Week 2
-  - Long-term inactive users
+* DORMANT: NOT active in Week 23 but was active within previous 4 weeks (Week 19-22)
+    - Example: User not active in Week 23, but was active in Week 20
+
+* CHURNED: NOT active in Week 23 AND last activity was more than 4 weeks ago (before Week 19)
+    - Example: User not active in Week 23, last seen in Week 16
 
 ================================================================================
 CRITICAL CALCULATION IN STEP 4
@@ -194,7 +192,7 @@ user_status_calculated AS (
 
 -- STEP 6: Aggregate metrics by week/acq/country/status
 SELECT
-  week_start AS week_start_date,
+  'WK' || LPAD(EXTRACT(WEEK FROM week_start)::TEXT, 2, '0') || ' ' || week_start AS cutoff_week,
   acq_source,
   country,
   user_status,

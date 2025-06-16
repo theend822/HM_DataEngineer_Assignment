@@ -99,8 +99,8 @@ models:
   - name: agg_user_lifecycle_weekly
     description: "Weekly user status tracking (new, retained, resurrected, dormant, churned) by acquisition source and country"
     columns:
-      - name: week_start_date
-        description: "Start date of the week (Sunday)"
+      - name: cutoff_week
+        description: "Cutoff week of lifecycle status metrics"
         tests:
           - not_null
       - name: acq_source
@@ -129,7 +129,7 @@ models:
       # No duplicate combinations
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
-            - week_start_date
+            - cutoff_week
             - acq_source  
             - country
             - user_status
@@ -148,7 +148,7 @@ models:
         tests:
           - not_null
           - accepted_values:
-              values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+              values: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16]
       - name: retained_users
         description: "Number of users from cohort active in this week"
         tests:
